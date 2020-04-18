@@ -21,28 +21,79 @@ If your drive is out of space, or close to it the upload will start but when you
 Sometimes if you run the script and MegaCMD is not already running the script will either hang or take forever to proceed. For now, just close the script and rerun it.
 #>
 
+#### Dependencies ####
+# 1. PowerShell
+# 2. MEGAcmd: mega-whoami (.bat), mega-login (.bat), mega-df (.bat), mega-transfers (.bat),
+#    mega-export (.bat), mega-put.
+
 #################################################################
 #################################################################
-#Set the environment variable for MEGAcmd. This gives access to the mega bat files
-Write-Host "Setting Megacmd Path. If this hangs, exit and retry" -ForegroundColor Yellow
-$env:PATH += ";$env:LOCALAPPDATA\MEGAcmd"
+# Detect the OS and try to set the environment variables for MEGAcmd.
+# This gives access to the MEGAcmd executables and wrapper scripts.
+function strapBoots() {
+    if ($IsWindows) {
+        $MEGApath = "$env:LOCALAPPDATA\MEGAcmd"
+        $OS = "Windows"
+        $PathSeparator = ";"
+    }
+    elseif ($IsMacOS) {
+        $MEGApath = "/Applications/MEGAcmd.app/Contents/MacOS"
+        $OS = "macOS"
+        $PathSeparator = ":"
+    }
+    elseif ($isLinux) {
+        $MEGApath = "/usr/bin"
+        $OS = "Linux"
+        $PathSeparator = ":"
+    }
+    else {
+        Write-Error "Unknown OS! Bailing..."
+        Write-Error "To fix this issue, install MEGAcmd and make sure it's in the PATH"
+        Exit
+    }
+    Write-Host "$OS detected! Assuming MEGAcmd lives under $MEGApath."
+    Write-Host "Checking for MEGAcmd and setting paths. If this hangs, exit and retry." -ForegroundColor Yellow
+    if (Test-path $MEGApath) {
+        $env:PATH += "$PathSeparator$MEGApath"
+    }
+    else {
+        Write-Error "MEGAcmd doesn't seem to exist under $MEGApath! Please install" +
+        "MEGAcmd and/or update this script accordingly."
+        Exit
+    }
+}
+
+#################################################################
+# Check if MEGAcmd is already installed and in the PATH
+$deps = "mega-whoami","mega-login","mega-df","mega-transfers","mega-export","mega-put"
+foreach ($dep in $deps) {
+    Write-Host -NoNewline "Checking for $dep..."
+    if (Get-Command $dep -ErrorAction SilentlyContinue) { 
+        Write-Host "found!"
+    }
+    else {
+        Write-Host "not found! I'm going to try and fix this by setting PATH..."
+        strapBoots
+    }
+}
+
 #################################################################
 #This will test to see if a user is logged in and if not prompt them to log in
-$testLogin = mega-whoami.bat
+$testLogin = mega-whoami
 
 if ($testLogin -like '*Not logged in.*')
 {
     Write-Host "User not logged in, prompting for credentials" -ForegroundColor Yellow
     $creds = Get-Credential -Message "Please enter your Mega username and password" 
 
-    mega-login.bat $creds.UserName $creds.GetNetworkCredential().Password 
+    mega-login $creds.UserName $creds.GetNetworkCredential().Password 
 }
 #################################################################
 #Display who the current user is
-mega-whoami.bat
+mega-whoami
 #################################################################
 #Display current free space
-mega-df.bat
+mega-df
 #################################################################
 #This step asks for the file/folder path of the thing(s) you are trying to upload and then gets rid of any quotations if they appear
 $FilePath = Read-Host "Enter the entire filepath of the file OR folder you want to upload. Be sure to include the file type (if applicable). This is case sensitive"
@@ -57,19 +108,19 @@ Write-Host "If you are uploading a lot of files the script might hang for a litt
 mega-put -q $FilePath
 #################################################################
 #This section will show the current transfers and their upload progress. It repeats this until there are nothing being uploaded.
-$isMegaEmpty = mega-transfers.bat --only-uploads
+$isMegaEmpty = mega-transfers --only-uploads
 
 do
 {
-    mega-transfers.bat --only-uploads
-    $isMegaEmpty = mega-transfers.bat --only-uploads
+    mega-transfers --only-uploads
+    $isMegaEmpty = mega-transfers --only-uploads
 }
 while($isMegaEmpty -ne $null)
 #################################################################
 #Now that the upload is done this section will get the link, encode it to base64, and then export it to a notepad file for easy copy pasting. We will also set the clipboard to the encoded string
 #First need to get the file name. To do this we need to export the link(-a) and the -f flag to auto-accept the copyright notice
 $FileName = Split-Path -Path $Filepath -Leaf
-$ExportedLink = mega-export.bat -a -f  $FileName
+$ExportedLink = mega-export -a -f  $FileName
 $ShortLink = $ExportedLink.Split(":",2)[1]    
 
 #Next, we need to encode it.
