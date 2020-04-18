@@ -1,12 +1,12 @@
-# Welcome to UploadToMegaV3!
-Created by: @disk546
-
-Last Modified: 3/24/20
+# Welcome to UploadToMegaV4!
+* Created by: Disk546 a.k.a. @disk5464
+* Original repo: https://github.com/disk5464/UploadToMega/
+* Last Modified: 4/18/20
 
 ## Description
 This script will leverage mega's MEGAcmd tool to log into a mega account, upload a file or folder, and then produce a base64 encoded link.
 
-## How to use (V3)
+## How to use
 1. Download and install [MEGAcmd](https://mega.nz/cmd). It is basically a set of command-line utilities that connect to mega.nz and run certain commands. For instance, **mega-login** will log you into your MEGA account. Just run the installer from MEGA and install as directed, no need to change anything.
 2. Run the script and provide the file path, including the file extension if you are uploading a single file.
 3. As the upload progresses it will rerun the **mega-transfers** script which displays the current files being uploaded. This will let you monitor upload progress.
@@ -26,6 +26,7 @@ This script will leverage mega's MEGAcmd tool to log into a mega account, upload
 10. Following this a variable with the file path two pipes, the encoded link, two more pipes, and the total upload size is created. The script appends this data into a text file, which is then opened. This file is created in the user’s My Documents (Windows) or Documents (macOS or Linux) folder. Each time something is uploaded the new link is added to this file so you can keep track of your links.
 11. Finally, on Windows, the clipboard is set to the encoded link and the script asks for a user input before PowerShell closes. I did this last step so that if there are any errors or a user wants to read the output, they don't have to worry about PowerShell auto closing.
 
-## Known Bugs
-* If your drive is out of space, or close to it, the upload will start but when you run out, the script will get stuck in an infinite loop. I plan on fixing this in the next release.
-* Sometimes if you run the script and MEGAcmd is not already running the script will either hang or take forever to proceed. For now, just close the script and rerun it.
+## Known Issues
+* If your drive is out of space, or close to it, the upload will start but when you run out, the script will get stuck in an infinite loop.
+* ~~Sometimes if you run the script and MEGAcmd is not already running the script will either hang or take forever to proceed. For now, just close the script and rerun it.~~
+* Sometimes the loop that shows the progress won't end and just loop forever. The file will be uploaded but the script won't produce an encoded link or the text file.
