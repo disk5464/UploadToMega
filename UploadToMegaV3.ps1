@@ -27,44 +27,33 @@ Sometimes if you run the script and MegaCMD is not already running the script wi
 #    mega-export (.bat), mega-put.
 
 #################################################################
-#################################################################
 # Detect the OS and try to set the environment variables for MEGAcmd.
-# This gives access to the MEGAcmd executables and wrapper scripts.
-function strapBoots() {
-    if ($IsWindows) {
-        $MEGApath = "$env:LOCALAPPDATA\MEGAcmd"
-        $OS = "Windows"
-        $PathSeparator = ";"
-    }
-    elseif ($IsMacOS) {
-        $MEGApath = "/Applications/MEGAcmd.app/Contents/MacOS"
-        $OS = "macOS"
-        $PathSeparator = ":"
-    }
-    elseif ($isLinux) {
-        $MEGApath = "/usr/bin"
-        $OS = "Linux"
-        $PathSeparator = ":"
-    }
-    else {
-        Write-Error "Unknown OS! Bailing..."
-        Write-Error "To fix this issue, install MEGAcmd and make sure it's in the PATH"
-        Exit
-    }
-    Write-Host "$OS detected! Assuming MEGAcmd lives under $MEGApath."
-    Write-Host "Checking for MEGAcmd and setting paths. If this hangs, exit and retry." -ForegroundColor Yellow
-    if (Test-path $MEGApath) {
-        $env:PATH += "$PathSeparator$MEGApath"
-    }
-    else {
-        Write-Error "MEGAcmd doesn't seem to exist under $MEGApath! Please install" +
-        "MEGAcmd and/or update this script accordingly."
-        Exit
-    }
+if ($IsWindows) {
+    $MEGApath = "$env:LOCALAPPDATA\MEGAcmd"
+    $OS = "Windows"
+    $PathVarSeparator = ";"
+    $PathSeparator = "\"
+}
+elseif ($IsMacOS) {
+    $MEGApath = "/Applications/MEGAcmd.app/Contents/MacOS"
+    $OS = "macOS"
+    $PathVarSeparator = ":"
+    $PathSeparator = "/"
+}
+elseif ($isLinux) {
+    $MEGApath = "/usr/bin"
+    $OS = "Linux"
+    $PathVarSeparator = ":"
+    $PathSeparator = "/"
+}
+else {
+    Write-Error "Unknown OS! Bailing..."
+    Exit
 }
 
 #################################################################
 # Check if MEGAcmd is already installed and in the PATH
+# This gives access to the MEGAcmd executables and wrapper scripts.
 $deps = "mega-whoami","mega-login","mega-df","mega-transfers","mega-export","mega-put"
 foreach ($dep in $deps) {
     Write-Host -NoNewline "Checking for $dep..."
@@ -73,7 +62,16 @@ foreach ($dep in $deps) {
     }
     else {
         Write-Host "not found! I'm going to try and fix this by setting PATH..."
-        strapBoots
+        Write-Host "$OS detected! Assuming MEGAcmd lives under $MEGApath."
+        Write-Host "Checking for MEGAcmd and setting paths. If this hangs, exit and retry." -ForegroundColor Yellow
+        if (Test-Path $MEGApath) {
+            $env:PATH += "$PathVarSeparator$MEGApath"
+        }
+        else {
+            Write-Error "MEGAcmd doesn't seem to exist under $MEGApath! Please install" +
+            "MEGAcmd and/or update this script accordingly."
+            Exit
+        }
     }
 }
 
@@ -99,7 +97,7 @@ mega-df
 $FilePath = Read-Host "Enter the entire filepath of the file OR folder you want to upload. Be sure to include the file type (if applicable). This is case sensitive"
 
 #Display the total size of the files being uploaded
-$TotalSize = "{0:N2} GB" -f ((gci $FilePath | measure Length -s).sum / 1GB)
+$TotalSize = "{0:N2} GB" -f ((Get-ChildItem $FilePath | Measure-Object Length -Sum).sum / 1GB)
 Write-Host  "Total Size of the file in GB being uploaded is" $TotalSize -ForegroundColor Yellow
 
 #This does the upload
@@ -108,14 +106,12 @@ Write-Host "If you are uploading a lot of files the script might hang for a litt
 mega-put -q $FilePath
 #################################################################
 #This section will show the current transfers and their upload progress. It repeats this until there are nothing being uploaded.
-$isMegaEmpty = mega-transfers --only-uploads
-
-do
-{
-    mega-transfers --only-uploads
+Do {
     $isMegaEmpty = mega-transfers --only-uploads
+    Write-Host $isMegaEmpty
 }
-while($isMegaEmpty -ne $null)
+While (![string]::IsNullOrEmpty($isMegaEmpty))
+
 #################################################################
 #Now that the upload is done this section will get the link, encode it to base64, and then export it to a notepad file for easy copy pasting. We will also set the clipboard to the encoded string
 #First need to get the file name. To do this we need to export the link(-a) and the -f flag to auto-accept the copyright notice
@@ -125,13 +121,12 @@ $ShortLink = $ExportedLink.Split(":",2)[1]
 
 #Next, we need to encode it.
 $sEncodedString=[Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes($ShortLink))
-write-host $sEncodedString
+Write-Host $sEncodedString
 
 #Next, we are going to check and see if the destination folder exists and if not create it
-$FolderPath = "C:\Users\" + $env:USERNAME + "\Documents\EncodedMegaTxts"
-$FolderExists = Test-path $FolderPath
+$FolderPath = $HOME + $PathSeparator + "Documents" + $PathSeparator + "EncodedMegaTxts"
 
-if($FolderExists -eq $false)
+if (!(Test-Path $FolderPath))
 {
     Write-Host "Encoded text file location does not exist creating it at "  $FolderPath
     New-Item -Path $FolderPath -ItemType Directory 
@@ -140,8 +135,13 @@ if($FolderExists -eq $false)
 
 #Now that we have an encoded link, we put it in a notepad file (saved to same directory as the uploaded file) and open it
 $fileValue =  $FilePath + " || " + $sEncodedString + " || " + $TotalSize
-Add-Content -Path $FolderPath\EncodedLinks.txt -Value $fileValue  
-start $FolderPath\EncodedLinks.txt
+Add-Content -Path ($FolderPath + $PathSeparator + "EncodedLinks.txt") -Value $fileValue  
+if ($IsWindows) {
+    start ($FolderPath + $PathSeparator + "EncodedLinks.txt")
+}
+else {
+    open ($FolderPath + $PathSeparator + "EncodedLinks.txt")
+}
 #################################################################
 #Ask for a user input before closing just in case there is an error that needs to be read before PowerShell closes
 Read-Host -Prompt "Press Enter to exit"
