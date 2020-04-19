@@ -1,5 +1,6 @@
 Welcome to UploadToMegaV4!
 Created by: Disk546
+Converted to Linux and macOS by: rouben
 ###############################
 Description: This script will leverage mega's MEGAcmd tool to log into a mega account, upload a file or folder, and then produce a base64 encoded link.
 Last Modified: 4/18/20
