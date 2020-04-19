@@ -30,6 +30,11 @@ Sometimes the loop that shows the progress won't end and just loop forever. The 
 
 #################################################################
 # Detect the OS and try to set the environment variables for MEGAcmd.
+# This is a little workaround for PowerShell < 6, which still ships with Windows...
+# Linux and macOS have PowerShell 6+ by default when installed from Microsoft's site
+if ( ($env:OS.Contains("Windows")) -And ([string]::IsNullOrEmpty($IsWindows)) ) {
+    $IsWindows = $True
+}
 if ($IsWindows) {
     $MEGApath = "$env:LOCALAPPDATA\MEGAcmd"
     $OS = "Windows"
