@@ -1,6 +1,6 @@
 # Welcome to UploadToMegaV4!
 * Created by: Disk546 a.k.a. @disk5464
-* Converted to Linux and MacOS by: rouben
+* Ported to Linux and MacOS by: rouben
 * Original repo: https://github.com/disk5464/UploadToMega/
 * Last Modified: 4/18/20
 
