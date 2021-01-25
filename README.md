@@ -11,7 +11,7 @@ This script will leverage mega's MEGAcmd tool to log into a mega account, upload
 1. Download and install [MEGAcmd](https://mega.nz/cmd). It is basically a set of command-line utilities that connect to mega.nz and run certain commands. For instance, **mega-login** will log you into your MEGA account. Just run the installer from MEGA and install as directed, no need to change anything.
 2. Run the script and provide the file path, including the file extension if you are uploading a single file.
 3. As the upload progresses it will rerun the **mega-transfers** script which displays the current files being uploaded. This will let you monitor upload progress.
-4. After the upload is complete the script will grab the public link from MEGA and encode it using **base64**. It then puts it in a text file along with the file path and opens the text file for you. On Windows, as a bonus, the clipboard is set to the encoded link. This way you end up with a encoded link that you can paste directly into your posts.
+4. After the upload is complete the script will grab the public link from MEGA and encode it using **base64**. It then puts it in a text file along with the file path and opens the text file for you. On Windows, as a bonus, the clipboard is set to the encoded link. This way you end up with a encoded link that you can paste directly into whatever you want.
 
 ## How it works
 1. The script checks if the user is logged in to MEGA. If not, it uses **get-credential** to securely get the user’s MEGA email and password.
