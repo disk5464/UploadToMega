@@ -29,5 +29,4 @@ This script will leverage mega's MEGAcmd tool to log into a mega account, upload
 
 ## Known Issues
 * If your drive is out of space, or close to it, the upload will start but when you run out, the script will get stuck in an infinite loop.
-* ~~Sometimes if you run the script and MEGAcmd is not already running the script will either hang or take forever to proceed. For now, just close the script and rerun it.~~
 * Sometimes the loop that shows the progress won't end and just loop forever. The file will be uploaded but the script won't produce an encoded link or the text file.
